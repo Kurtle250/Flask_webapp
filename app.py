@@ -20,7 +20,7 @@ mysql = MySQL(app)
 
 Articles = Articles()
 
-
+# Home page
 @app.route('/')
 def index():
     return render_template('home.html')
@@ -28,11 +28,12 @@ def index():
 @app.route('/about')
 def about():
     return render_template('about.html')
-
+# Collection of Articles
 @app.route('/articles')
 def articles():
     return render_template('articles.html', articles=Articles)
 
+# Single Article
 @app.route('/article/<string:id>/')
 def article(id):
     return render_template('article.html', id=id)
@@ -47,7 +48,7 @@ class RegisterForm(Form):
         validators.EqualTo('confirm', message='Passwords do not match')
     ])
     confirm = PasswordField('Confirm Password')
-
+# User Register
 @app.route('/register', methods=['GET','POST'])
 def register():
     form = RegisterForm(request.form)
@@ -72,7 +73,7 @@ def register():
         redirect(url_for('index'))
 
     return render_template('register.html', form=form)
-
+# User Login
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
@@ -93,15 +94,27 @@ def login():
 
             # Compare Passwords
             if sha256_crypt.verify(password_candidate, password):
-                app.logger.info("Password Matched")
+                #app.logger.info("Password Matched")
+                session['logged_in'] = True
+                session['username'] = username
+
+                flash('you are now logged in', 'success')
+                return redirect(url_for('dashboard'))
             else:
                 error = 'invald Password'
-                return render_template('login.html', error)
+                return render_template('login.html', error=error)
         else:
             error = 'Username not found'
-            return render_template('login.html', error)
-
+            return render_template('login.html', error=error)
+        # Close SQL connection
+        cur.close()
     return render_template('login.html')
+# User Dashboard
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+
 if __name__ == '__main__':
     app.secret_key = "secret123"
     app.run(debug=True)
